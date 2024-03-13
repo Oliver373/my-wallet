@@ -45,7 +45,6 @@ const confirmMnemonic = () => {
     confirmMnemonicVisible.value = false;
     mnemonicDisable.value = false;
     createWallet();
-    mnemonic.value = "";
     return true
   }
   showNotify({ type: 'danger', message: "助记词错误"});
@@ -56,7 +55,7 @@ const closeConfirmMnemonicDialog = () => {
   confirmMnemonicVisible.value = false;
 }
 
-const createWallet = () => {
+const createWallet = async () => {
   const hdWallet = hdkey.EthereumHDKey.fromMnemonic(mnemonic.value);
   let walletInfo = storeWalletInfo || [];
   const addressIndex = walletInfo.length === 0 ? 0 : walletInfo.length;
@@ -66,7 +65,7 @@ const createWallet = () => {
   const lowerCaseAddress = wallet.getAddressString();
   // const CheckSumAddress = wallet.getChecksumAddressString();
   const privateKey = wallet.getPrivateKeyString();
-  const keyStore = wallet.toV3(password.value);
+  const keyStore = await wallet.toV3(password.value);
 
   const walletObj = {
       id: addressIndex,
