@@ -1,5 +1,18 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import ButtonVue from './components/ButtonVue.vue'
+import AccountList from './components/AccountList.vue'
+import store2 from 'store2'
+import {WALLETINFO_KEY} from '@/contants';
+
+
+const walletInfo = ref([])
+
+onMounted(() => {
+  walletInfo.value = store2.get(WALLETINFO_KEY) || []
+  console.log(walletInfo);
+});
+
 </script>
 
 <template>
@@ -7,6 +20,7 @@ import ButtonVue from './components/ButtonVue.vue'
   </header>
   <main>
     <ButtonVue />
+    <AccountList :wallet-info="walletInfo" />
   </main>
 </template>
 

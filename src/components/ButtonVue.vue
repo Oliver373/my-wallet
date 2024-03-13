@@ -2,12 +2,14 @@
 import { showNotify } from "vant";
 import {ref} from "vue";
 import * as bip39 from "bip39";
-import { hdkey } from "@ethereumjs/wallet"
+import { hdkey } from "@ethereumjs/wallet";
+import store2 from 'store2';
+import {WALLETINFO_KEY} from '@/contants';
+
 
 const createWalletDialogVisible = ref(false);
 const password = ref("");
-console.log(hdkey);
-
+let storeWalletInfo = store2.get(WALLETINFO_KEY);
 
 const createWalletEvent = () => {
   createWalletDialogVisible.value = true
@@ -18,9 +20,14 @@ const confirmPassword = () => {
     showNotify({ type: 'danger', message: "密码不能为空"});
     return false;
   }
-  console.log(password.value);
-  mnemonic.value = bip39.generateMnemonic();
-  mnemonicDisable.value= true;
+  if (storeWalletInfo) {
+    mnemonicDisable.value = false;
+    mnemonic.value = storeWalletInfo[0]['mnemonic']
+    createWallet();
+  } else {
+    mnemonicDisable.value= true;
+    mnemonic.value = bip39.generateMnemonic();
+  }
   return true;
 }
 
@@ -34,13 +41,11 @@ let confirmMnemonicVisible = ref(false);
 let inputMnemonic = ref("");
 
 const confirmMnemonic = () => {
-  
-  console.log(inputMnemonic.value);
   if (inputMnemonic.value == mnemonic.value) {
     confirmMnemonicVisible.value = false;
     mnemonicDisable.value = false;
-    mnemonic.value = "";
     createWallet();
+    mnemonic.value = "";
     return true
   }
   showNotify({ type: 'danger', message: "助记词错误"});
@@ -52,7 +57,30 @@ const closeConfirmMnemonicDialog = () => {
 }
 
 const createWallet = () => {
-  const wallet = hdkey.EthereumHDKey.fromMnemonic(mnemonic.value);
+  const hdWallet = hdkey.EthereumHDKey.fromMnemonic(mnemonic.value);
+  let walletInfo = storeWalletInfo || [];
+  const addressIndex = walletInfo.length === 0 ? 0 : walletInfo.length;
+  const keyPair = hdWallet.derivePath(`m/44'/60'/0'/0/${addressIndex}`);
+  const wallet = keyPair.getWallet();
+
+  const lowerCaseAddress = wallet.getAddressString();
+  // const CheckSumAddress = wallet.getChecksumAddressString();
+  const privateKey = wallet.getPrivateKeyString();
+  const keyStore = wallet.toV3(password.value);
+
+  const walletObj = {
+      id: addressIndex,
+      address: lowerCaseAddress,
+      privateKey,
+      keyStore,
+      mnemonic: mnemonic.value,
+      balance: 0,
+    };
+  walletInfo.push(walletObj);
+  console.log(walletInfo);
+  store2(WALLETINFO_KEY, walletInfo);
+  storeWalletInfo = store2.get(WALLETINFO_KEY);
+  
 }
 
 </script>
@@ -104,4 +132,4 @@ body {
     user-select: all;
   }
 }
-</style>
+</style>./contants.js@/contants
